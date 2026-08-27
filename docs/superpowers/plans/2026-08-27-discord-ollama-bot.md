@@ -211,6 +211,8 @@ Run `git add src/bot.ts tests/bot.test.ts && git commit -m "feat: handle Discord
 **Files:**
 - Create: `src/index.ts`
 - Create: `README.md`
+- Create: `Dockerfile`
+- Create: `.dockerignore`
 - Modify: `src/bot.ts` if needed for shutdown hooks
 
 - [ ] **Step 1: Implement application startup**
@@ -223,23 +225,27 @@ Register `SIGINT` and `SIGTERM` handlers that stop new queued work, await active
 
 - [ ] **Step 3: Write operational README instructions**
 
-Document Node.js 24 LTS, `npm install`, copying `.env.example` to `.env`, creating a Discord application and bot, enabling Message Content Intent, granting View Channel/Send Messages/Read Message History permissions, configuring the remote Ollama HTTPS URL and bearer key, ensuring the selected model exists, and running `npm run dev`, `npm run typecheck`, `npm test`, `npm run build`, and `npm start`. Explicitly warn that every eligible server message invokes Ollama and may create significant local model load.
+Document Node.js 24 LTS, `npm install`, copying `.env.example` to `.env`, creating a Discord application and bot, enabling Message Content Intent, granting View Channel/Send Messages/Read Message History permissions, configuring the remote Ollama HTTPS URL and bearer key, ensuring the selected model exists, and running `npm run dev`, `npm run typecheck`, `npm test`, `npm run build`, and `npm start`. Add Docker instructions using `docker build -t discord-ollama-bot .` and `docker run --rm --env-file .env discord-ollama-bot`. Explicitly warn that every eligible server message invokes Ollama and may create significant local model load.
 
-- [ ] **Step 4: Run the complete verification suite**
+- [ ] **Step 4: Add the production container**
 
-Run `npm test`, `npm run typecheck`, and `npm run build`. Expected: all tests pass, type-checking succeeds, and `dist/index.js` is produced. Do not run the bot without real credentials unless the user supplies them.
+Create a multi-stage `Dockerfile` using `node:24-bookworm-slim` for both stages. In the builder stage, copy `package*.json`, run `npm ci`, copy `src`, `tsconfig.json`, and `vitest.config.ts`, then run `npm run build`. In the runtime stage, copy `package*.json`, run `npm ci --omit=dev`, copy `dist`, set `NODE_ENV=production`, switch to the image's non-root `node` user, and run `node dist/index.js`. Do not use `ARG` or `ENV` for secrets and do not expose ports. Create `.dockerignore` excluding `.env`, `.git`, `node_modules`, `dist`, `coverage`, tests, docs, and editor metadata.
 
-- [ ] **Step 5: Inspect the final diff and commit**
+- [ ] **Step 5: Run the complete verification suite**
+
+Run `npm test`, `npm run typecheck`, and `npm run build`. Then run `docker build --tag discord-ollama-bot:test .` and inspect the image with `docker image inspect discord-ollama-bot:test --format '{{.Config.User}} {{.Config.ExposedPorts}}'`. Expected: all tests pass, type-checking succeeds, `dist/index.js` is produced, the image builds, the configured user is `node`, and no ports are exposed. Do not run the bot without real credentials unless the user supplies them.
+
+- [ ] **Step 6: Inspect the final diff and commit**
 
 Run `git status --short`, `git diff --check`, and `git diff HEAD~1`. Confirm `.env` and tokens are absent, then run:
 
 ```bash
-git add src/index.ts src/bot.ts README.md
+git add src/index.ts src/bot.ts README.md Dockerfile .dockerignore
 git commit -m "feat: launch Discord Ollama reply bot"
 ```
 
 ## Plan Self-Review
 
-- Spec coverage: configuration, remote HTTPS Ollama, Discord intents, server-only filtering, stateless prompts, bounded concurrency, message splitting, safe errors, graceful shutdown, README setup, and credential-free tests are covered by Tasks 1-5.
+- Spec coverage: configuration, remote HTTPS Ollama, Discord intents, server-only filtering, stateless prompts, bounded concurrency, message splitting, safe errors, graceful shutdown, README setup, credential-free tests, multi-stage Docker packaging, non-root execution, runtime env injection, and no exposed ports are covered by Tasks 1-5.
 - Placeholder scan: no `TODO`, `TBD`, or unspecified implementation steps remain.
 - Type consistency: `AppConfig`, `ChatClient`, `createOllamaResponder`, and `createMessageHandler` signatures are defined before their consumers.
