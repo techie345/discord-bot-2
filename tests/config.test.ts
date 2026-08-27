@@ -14,8 +14,8 @@ describe('loadConfig', () => {
     expect(() => loadConfig(env)).toThrow('DISCORD_TOKEN');
   });
 
-  it('rejects a non-HTTPS Ollama host', () => {
-    const env = { ...validEnv, OLLAMA_HOST: 'http://ollama.example.lan' };
+  it('rejects an Ollama host with an unsupported protocol', () => {
+    const env = { ...validEnv, OLLAMA_HOST: 'ftp://ollama.example.lan' };
 
     expect(() => loadConfig(env)).toThrow('OLLAMA_HOST');
   });
@@ -24,6 +24,7 @@ describe('loadConfig', () => {
     const config = loadConfig(validEnv);
 
     expect(config.ollamaModel).toBe('llama3.2');
+    expect(config.ollamaSystemPrompt).toContain('funny');
     expect(config.ollamaTimeoutMs).toBe(60_000);
     expect(config.maxConcurrentRequests).toBe(2);
     expect(config.fallbackReply).toBe('I could not generate a reply right now.');

@@ -3,7 +3,9 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "engines": { "node": ">=24.17.0" },
+  "engines": {
+    "node": ">=24.17.0"
+  },
   "scripts": {
     "build": "tsc --noEmit false",
     "start": "node dist/index.js",
@@ -15,7 +17,8 @@
   "dependencies": {
     "discord.js": "latest",
     "dotenv": "latest",
-    "ollama": "latest"
+    "ollama": "latest",
+    "pino": "^10.3.1"
   },
   "devDependencies": {
     "@types/node": "latest",

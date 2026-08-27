@@ -4,15 +4,19 @@ import { Ollama } from 'ollama';
 import { createMessageHandler } from './bot.js';
 import { loadConfig } from './config.js';
 import { createOllamaResponder } from './ollama-responder.js';
+import { Logger } from './logger.js';
 
 async function main(): Promise<void> {
   const config = loadConfig(process.env);
+  const logger = new Logger();
   const ollama = new Ollama({
     host: config.ollamaHost,
-    headers: { Authorization: `Bearer ${config.ollamaApiKey}` },
+    ...(config.ollamaApiKey
+      ? { headers: { Authorization: `Bearer ${config.ollamaApiKey}` } }
+      : {}),
   });
-  const responder = createOllamaResponder(ollama, config);
-  const handler = createMessageHandler({ responder, config, logger: console });
+  const responder = createOllamaResponder(ollama, config, logger);
+  const handler = createMessageHandler({ responder, config, logger });
   const client = new Client({
     intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent],
   });
@@ -42,7 +46,6 @@ async function main(): Promise<void> {
 }
 
 main().catch((error: unknown) => {
-  const message = error instanceof Error ? error.message : String(error);
-  console.error(`Unable to start bot: ${message}`);
+  new Logger().error('Unable to start bot', error);
   process.exitCode = 1;
 });

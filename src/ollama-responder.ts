@@ -1,4 +1,9 @@
 import type { AppConfig } from './config.js';
+import { Logger } from './logger.js';
+
+function logHost(host: string): string {
+  return new URL(host).origin;
+}
 
 export interface ChatClient {
   chat(request: {
@@ -10,25 +15,53 @@ export interface ChatClient {
 
 export function createOllamaResponder(
   client: ChatClient,
-  config: Pick<AppConfig, 'ollamaModel' | 'ollamaSystemPrompt' | 'ollamaTimeoutMs'>,
+  config: Pick<AppConfig, 'ollamaHost' | 'ollamaModel' | 'ollamaSystemPrompt' | 'ollamaTimeoutMs'>,
+  logger: Pick<Logger, 'error' | 'info'> = new Logger(),
 ): (content: string) => Promise<string> {
   return async (content: string): Promise<string> => {
+    const startedAt = Date.now();
+    const host = logHost(config.ollamaHost);
+    logger.info('Ollama request started', { host, model: config.ollamaModel });
     let timeout: ReturnType<typeof setTimeout> | undefined;
     const timeoutPromise = new Promise<never>((_, reject) => {
       timeout = setTimeout(() => reject(new Error('Ollama request timed out')), config.ollamaTimeoutMs);
     });
-    const request = client.chat({
+    const request = Promise.resolve().then(() => client.chat({
       model: config.ollamaModel,
       messages: [
         { role: 'system', content: config.ollamaSystemPrompt },
         { role: 'user', content },
       ],
       stream: false,
-    });
-    const response = await Promise.race([request, timeoutPromise]);
-    if (timeout) clearTimeout(timeout);
+    }));
+    let response: Awaited<typeof request>;
+    try {
+      response = await Promise.race([request, timeoutPromise]);
+    } catch (error) {
+      logger.error('Ollama request failed', error, {
+        host,
+        model: config.ollamaModel,
+        elapsedMs: Date.now() - startedAt,
+      });
+      throw error;
+    } finally {
+      if (timeout) clearTimeout(timeout);
+    }
     const result = response.message?.content?.trim();
-    if (!result) throw new Error('Ollama returned an empty response');
+    if (!result) {
+      const error = new Error('Ollama returned an empty response');
+      logger.error('Ollama response was empty', error, {
+        host,
+        model: config.ollamaModel,
+        elapsedMs: Date.now() - startedAt,
+      });
+      throw error;
+    }
+    logger.info('Ollama request completed', {
+      host,
+      model: config.ollamaModel,
+      elapsedMs: Date.now() - startedAt,
+    });
     return result;
   };
 }
