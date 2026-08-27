@@ -24,7 +24,6 @@ describe('createOllamaResponder', () => {
         { role: 'system', content: 'Be concise.' },
         { role: 'user', content: 'Current message' },
       ],
-      signal: expect.any(AbortSignal),
     }));
   });
 
@@ -40,5 +39,12 @@ describe('createOllamaResponder', () => {
     const responder = createOllamaResponder(client, config);
 
     await expect(responder('Hello')).rejects.toThrow('server unavailable');
+  });
+
+  it('rejects when the Ollama request exceeds the timeout', async () => {
+    const client = fakeClient(new Promise(() => undefined));
+    const responder = createOllamaResponder(client, { ...config, ollamaTimeoutMs: 5 });
+
+    await expect(responder('Hello')).rejects.toThrow('timed out');
   });
 });

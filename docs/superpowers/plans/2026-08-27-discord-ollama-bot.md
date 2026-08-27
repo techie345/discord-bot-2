@@ -145,7 +145,7 @@ Run `git add src/config.ts src/message-utils.ts tests/config.test.ts tests/messa
 
 - [ ] **Step 1: Write failing responder tests**
 
-Define a fake client with `chat(request)` and test that `createOllamaResponder` sends exactly one `system` message when configured and one `user` message containing only the current Discord content. Test extraction of `response.message.content`, rejection of an empty response, propagation of client errors, and timeout rejection using an injected `AbortSignal` or fake timer.
+Define a fake client with `chat(request)` and test that `createOllamaResponder` sends exactly one `system` message when configured and one `user` message containing only the current Discord content. Test extraction of `response.message.content`, rejection of an empty response, propagation of client errors, and timeout rejection using a short test timeout.
 
 - [ ] **Step 2: Run the responder tests and verify failure**
 
@@ -170,7 +170,7 @@ export function createOllamaResponder(
 ): (content: string) => Promise<string>;
 ```
 
-Use `AbortSignal.timeout(config.ollamaTimeoutMs)` when calling the real client. Trim the returned content and throw a descriptive non-secret error when it is absent or blank. Keep the current message as the only user content.
+Use `Promise.race` with a cleared `setTimeout` to enforce `config.ollamaTimeoutMs`, because the current non-streaming Ollama client request type does not accept an abort signal. Trim the returned content and throw a descriptive non-secret error when it is absent or blank. Keep the current message as the only user content.
 
 - [ ] **Step 4: Run tests and type-check**
 
