@@ -1,10 +1,12 @@
-import 'dotenv/config';
+import { config as loadDotenv } from 'dotenv';
 import { Client, Events, GatewayIntentBits } from 'discord.js';
 import { Ollama } from 'ollama';
 import { createMessageHandler } from './bot.js';
 import { loadConfig } from './config.js';
 import { createOllamaResponder } from './ollama-responder.js';
 import { Logger } from './logger.js';
+
+loadDotenv({ override: true });
 
 async function main(): Promise<void> {
   const config = loadConfig(process.env);
