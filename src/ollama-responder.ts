@@ -1,6 +1,10 @@
 import type { AppConfig } from './config.js';
 import { Logger } from './logger.js';
 
+function logHost(host: string): string {
+  return new URL(host).origin;
+}
+
 export interface ChatClient {
   chat(request: {
     model: string;
@@ -16,7 +20,8 @@ export function createOllamaResponder(
 ): (content: string) => Promise<string> {
   return async (content: string): Promise<string> => {
     const startedAt = Date.now();
-    logger.info('Ollama request started', { host: config.ollamaHost, model: config.ollamaModel });
+    const host = logHost(config.ollamaHost);
+    logger.info('Ollama request started', { host, model: config.ollamaModel });
     let timeout: ReturnType<typeof setTimeout> | undefined;
     const timeoutPromise = new Promise<never>((_, reject) => {
       timeout = setTimeout(() => reject(new Error('Ollama request timed out')), config.ollamaTimeoutMs);
@@ -34,7 +39,7 @@ export function createOllamaResponder(
       response = await Promise.race([request, timeoutPromise]);
     } catch (error) {
       logger.error('Ollama request failed', error, {
-        host: config.ollamaHost,
+        host,
         model: config.ollamaModel,
         elapsedMs: Date.now() - startedAt,
       });
@@ -46,14 +51,14 @@ export function createOllamaResponder(
     if (!result) {
       const error = new Error('Ollama returned an empty response');
       logger.error('Ollama response was empty', error, {
-        host: config.ollamaHost,
+        host,
         model: config.ollamaModel,
         elapsedMs: Date.now() - startedAt,
       });
       throw error;
     }
     logger.info('Ollama request completed', {
-      host: config.ollamaHost,
+      host,
       model: config.ollamaModel,
       elapsedMs: Date.now() - startedAt,
     });

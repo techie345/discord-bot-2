@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { createOllamaResponder, type ChatClient } from '../src/ollama-responder.js';
 
 const config = {
-  ollamaHost: 'http://localhost:11434',
+  ollamaHost: 'http://user:secret@localhost:11434/path',
   ollamaModel: 'llama3.2',
   ollamaSystemPrompt: 'Be concise.',
   ollamaTimeoutMs: 1_000,
