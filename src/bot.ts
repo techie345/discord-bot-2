@@ -11,14 +11,15 @@ interface BotMessage {
   reply: (content: string) => Promise<unknown>;
 }
 
-interface Logger {
-  error: (...args: unknown[]) => void;
+interface MessageLogger {
+  error: (message: string, error?: unknown, metadata?: Record<string, unknown>) => void;
+  info?: (message: string, metadata?: Record<string, unknown>) => void;
 }
 
 interface HandlerDependencies {
   responder: (content: string) => Promise<string>;
   config: Pick<AppConfig, 'maxConcurrentRequests' | 'fallbackReply'>;
-  logger: Logger;
+  logger: MessageLogger;
 }
 
 export interface MessageHandler {
@@ -40,11 +41,15 @@ export function createMessageHandler({ responder, config, logger }: HandlerDepen
   };
 
   const logError = (message: BotMessage, error: unknown): void => {
-    const detail = error instanceof Error ? error.message : String(error);
-    logger.error('Message handling failed', { messageId: message.id, error: detail });
+    logger.error('Message handling failed', error, {
+      messageId: message.id,
+      guildId: message.guildId,
+    });
   };
 
   const process = async (message: BotMessage): Promise<void> => {
+    const startedAt = Date.now();
+    logger.info?.('Processing Discord message', { messageId: message.id, guildId: message.guildId });
     try {
       await message.channel.sendTyping?.();
     } catch (error) {
@@ -66,6 +71,11 @@ export function createMessageHandler({ responder, config, logger }: HandlerDepen
 
     try {
       for (const chunk of splitDiscordMessage(response)) await message.reply(chunk);
+      logger.info?.('Discord message processed', {
+        messageId: message.id,
+        guildId: message.guildId,
+        elapsedMs: Date.now() - startedAt,
+      });
     } catch (error) {
       logError(message, error);
     }

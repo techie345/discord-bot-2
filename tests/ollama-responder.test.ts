@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { createOllamaResponder, type ChatClient } from '../src/ollama-responder.js';
 
 const config = {
+  ollamaHost: 'http://localhost:11434',
   ollamaModel: 'llama3.2',
   ollamaSystemPrompt: 'Be concise.',
   ollamaTimeoutMs: 1_000,
@@ -24,6 +25,20 @@ describe('createOllamaResponder', () => {
         { role: 'system', content: 'Be concise.' },
         { role: 'user', content: 'Current message' },
       ],
+    }));
+  });
+
+  it('logs nested client errors with request metadata', async () => {
+    const client = fakeClient(undefined);
+    const logger = { error: vi.fn(), info: vi.fn() };
+    const error = new Error('fetch failed', { cause: new Error('ECONNREFUSED') });
+    client.chat.mockRejectedValue(error);
+    const responder = createOllamaResponder(client, config, logger);
+
+    await expect(responder('Hello')).rejects.toThrow('fetch failed');
+    expect(logger.error).toHaveBeenCalledWith('Ollama request failed', error, expect.objectContaining({
+      host: 'http://localhost:11434',
+      model: 'llama3.2',
     }));
   });
 

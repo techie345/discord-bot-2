@@ -1,7 +1,7 @@
 export interface AppConfig {
   discordToken: string;
   ollamaHost: string;
-  ollamaApiKey: string;
+  ollamaApiKey?: string;
   ollamaModel: string;
   ollamaSystemPrompt: string;
   ollamaTimeoutMs: number;
@@ -29,16 +29,16 @@ export function loadConfig(env: Record<string, string | undefined>): AppConfig {
   try {
     parsedHost = new URL(ollamaHost);
   } catch {
-    throw new Error('OLLAMA_HOST must be a valid HTTPS URL');
+    throw new Error('OLLAMA_HOST must be a valid URL');
   }
-  if (parsedHost.protocol !== 'https:') throw new Error('OLLAMA_HOST must use HTTPS');
+  if (parsedHost.protocol !== 'https:' && parsedHost.protocol !== 'http:') throw new Error('OLLAMA_HOST must use HTTP or HTTPS');
 
   return {
     discordToken: required(env, 'DISCORD_TOKEN'),
     ollamaHost: parsedHost.toString().replace(/\/$/, ''),
-    ollamaApiKey: required(env, 'OLLAMA_API_KEY'),
+    ollamaApiKey: env.OLLAMA_API_KEY?.trim() || undefined,
     ollamaModel: env.OLLAMA_MODEL?.trim() || 'llama3.2',
-    ollamaSystemPrompt: env.OLLAMA_SYSTEM_PROMPT?.trim() || 'You are a concise and helpful Discord assistant.',
+    ollamaSystemPrompt: env.OLLAMA_SYSTEM_PROMPT?.trim() || 'You are a concise, funny, and witty Discord assistant. Keep replies helpful and appropriate.',
     ollamaTimeoutMs: positiveInteger(env, 'OLLAMA_TIMEOUT_MS', 60_000),
     maxConcurrentRequests: positiveInteger(env, 'MAX_CONCURRENT_REQUESTS', 2),
     fallbackReply: env.FALLBACK_REPLY?.trim() || 'I could not generate a reply right now.',
