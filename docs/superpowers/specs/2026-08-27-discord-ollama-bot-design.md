@@ -14,6 +14,8 @@ Build a TypeScript Discord bot that generates an AI reply for every human-author
 - Send only the current message to Ollama; do not persist conversation history.
 - Configure secrets and deployment settings with environment variables.
 - Run as one process with no database or web server.
+- Package the bot with a multi-stage Node.js 24 LTS slim Dockerfile.
+- Do not install or run Ollama in the bot image; connect to the existing LAN Ollama server over authenticated HTTPS.
 
 ## Architecture
 
@@ -28,6 +30,12 @@ The event flow is:
 5. The generated response is split into Discord-sized messages when necessary and sent to the originating channel.
 
 The Ollama URL, model, API key, request timeout, concurrency limit, and optional system prompt are configurable. The API key is never logged. Logs contain operational errors and identifiers as needed, but not full user message content.
+
+## Container Packaging
+
+The repository will include a multi-stage `Dockerfile` that installs dependencies and compiles TypeScript in a builder stage, then copies only production dependencies and `dist/` into a Node.js 24 LTS slim runtime stage. The runtime process runs as a non-root user with no exposed ports. `.dockerignore` excludes `.env`, Git metadata, dependencies, tests, documentation, and build artifacts. The image receives configuration at runtime through `--env-file`; it does not contain Discord or Ollama secrets.
+
+The documented deployment commands are `docker build -t discord-ollama-bot .` and `docker run --rm --env-file .env discord-ollama-bot`. The image makes outbound connections to Discord and the configured HTTPS Ollama endpoint; Ollama is not composed or managed by this application.
 
 ## Error Handling
 
@@ -49,3 +57,4 @@ The README will document Node.js installation, dependency installation, Discord 
 - Messages longer than Discord's content limit are delivered in ordered chunks.
 - Ollama and Discord failures are isolated to the affected message and observable in safe logs.
 - The project type-checks and tests without external service credentials.
+- The production image builds successfully and starts without requiring exposed inbound ports.
