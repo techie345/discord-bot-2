@@ -244,8 +244,30 @@ git add src/index.ts src/bot.ts README.md Dockerfile .dockerignore
 git commit -m "feat: launch Discord Ollama reply bot"
 ```
 
+### Task 6: Add GitHub Actions CI and GHCR publishing
+
+**Files:**
+- Create: `.github/workflows/ci.yml`
+- Create: `.github/workflows/publish.yml`
+
+- [ ] **Step 1: Add pull-request verification workflow**
+
+Create `.github/workflows/ci.yml` triggered by `pull_request`, using `actions/checkout@v4` and `actions/setup-node@v4` with Node.js 24 and npm cache enabled. Run `npm ci`, `npm test`, `npm run typecheck`, and `npm run build` in separate named steps. Grant only `contents: read` permissions.
+
+- [ ] **Step 2: Add main-branch GHCR workflow**
+
+Create `.github/workflows/publish.yml` triggered by `push` to `main`. Grant `contents: read` and `packages: write`. Check out the repository, set up Docker Buildx, log into `ghcr.io` with `${{ github.actor }}` and `${{ secrets.GITHUB_TOKEN }}`, derive lowercase image metadata for `ghcr.io/${{ github.repository }}`, and use `docker/metadata-action@v5` to create `latest` and `sha-<commit>` tags. Build and push with `docker/build-push-action@v6` using `push: true` and the repository `Dockerfile`.
+
+- [ ] **Step 3: Validate workflow files and local verification**
+
+Inspect both YAML files for valid event filters, permissions, action versions, and secret references. Run `npm test`, `npm run typecheck`, and `npm run build`; expected: 20 tests pass and all commands exit successfully. If an action-lint tool is available, run it; otherwise use a YAML parser or GitHub workflow syntax review without adding a new runtime dependency.
+
+- [ ] **Step 4: Commit and push the workflow changes**
+
+Run `git status --short`, `git diff --check`, `git add .github/workflows/ docs/superpowers/plans/2026-08-27-discord-ollama-bot.md`, `git commit -m "ci: add PR checks and GHCR publishing"`, and `git push upstream feature/discord-ollama-bot`.
+
 ## Plan Self-Review
 
-- Spec coverage: configuration, remote HTTPS Ollama, Discord intents, server-only filtering, stateless prompts, bounded concurrency, message splitting, safe errors, graceful shutdown, README setup, credential-free tests, multi-stage Docker packaging, non-root execution, runtime env injection, and no exposed ports are covered by Tasks 1-5.
+- Spec coverage: configuration, remote HTTPS Ollama, Discord intents, server-only filtering, stateless prompts, bounded concurrency, message splitting, safe errors, graceful shutdown, README setup, credential-free tests, multi-stage Docker packaging, non-root execution, runtime env injection, no exposed ports, PR CI, GHCR publishing, latest tags, SHA tags, and least-privilege permissions are covered by Tasks 1-6.
 - Placeholder scan: no `TODO`, `TBD`, or unspecified implementation steps remain.
 - Type consistency: `AppConfig`, `ChatClient`, `createOllamaResponder`, and `createMessageHandler` signatures are defined before their consumers.
