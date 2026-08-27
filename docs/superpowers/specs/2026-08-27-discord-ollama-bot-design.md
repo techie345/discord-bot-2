@@ -37,6 +37,12 @@ The repository will include a multi-stage `Dockerfile` that installs dependencie
 
 The documented deployment commands are `docker build -t discord-ollama-bot .` and `docker run --rm --env-file .env discord-ollama-bot`. The image makes outbound connections to Discord and the configured HTTPS Ollama endpoint; Ollama is not composed or managed by this application.
 
+## CI/CD
+
+The repository will include two GitHub Actions workflows. `.github/workflows/ci.yml` runs for pull requests, installs dependencies with `npm ci`, and runs the credential-free test suite, strict type-check, and production build on Node.js 24. `.github/workflows/publish.yml` runs on pushes to `main`, builds the existing Dockerfile, and publishes the image to `ghcr.io/<owner>/<repository>` using the built-in `GITHUB_TOKEN`.
+
+The publish workflow creates both `latest` and immutable `sha-<commit>` tags. It requests only `contents: read` and `packages: write` permissions. Neither workflow requires Discord or Ollama credentials.
+
 ## Error Handling
 
 Ollama timeouts, connection failures, unavailable models, empty responses, and Discord send failures are caught at the message boundary. A short configurable fallback reply is sent when generation fails, unless Discord itself cannot accept the reply. Individual failures do not terminate the Gateway process. Shutdown stops accepting new work, waits for active handlers within a bounded period, and then destroys the Discord client.
