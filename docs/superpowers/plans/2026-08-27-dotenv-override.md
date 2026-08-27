@@ -16,17 +16,17 @@
 - Modify: `src/index.ts:1`
 - Test: `tests/config.test.ts`
 
-- [ ] **Step 1: Add a regression test**
+- [x] **Step 1: Add a regression test**
 
-Mock `dotenv` before importing the entrypoint and assert that its `config` function receives `{ override: true }`. Keep the test isolated from Discord login by mocking the other startup dependencies or by testing a small exported startup configuration helper if the current entrypoint structure requires it.
+Add `tests/startup.test.ts`, mock `dotenv` before importing the entrypoint, and assert that its `config` function receives `{ override: true }`. Keep the test isolated from Discord login by mocking the other startup dependencies.
 
-- [ ] **Step 2: Run the focused test and verify it fails**
+- [x] **Step 2: Run the focused test and verify it fails**
 
-Run: `npm test -- tests/config.test.ts`
+Run: `npm test -- tests/startup.test.ts`
 
-Expected: the new assertion fails because `src/index.ts` currently imports `dotenv/config` without an explicit override option.
+Expected before implementation: the new assertion fails because `src/index.ts` imports `dotenv/config` without an explicit override option.
 
-- [ ] **Step 3: Implement the minimal startup change**
+- [x] **Step 3: Implement the minimal startup change**
 
 Replace the side-effect import in `src/index.ts`:
 
@@ -44,7 +44,7 @@ loadDotenv({ override: true });
 
 Leave `loadConfig(process.env)` unchanged.
 
-- [ ] **Step 4: Run focused and full verification**
+- [x] **Step 4: Run focused and full verification**
 
 Run: `npm test -- tests/config.test.ts`
 
@@ -54,7 +54,7 @@ Run: `npm test && npm run typecheck && npm run build`
 
 Expected: all tests pass, type-check succeeds, and TypeScript emits `dist/index.js`.
 
-- [ ] **Step 5: Inspect and commit the implementation**
+- [x] **Step 5: Inspect and commit the implementation**
 
 Run:
 
