@@ -23,7 +23,7 @@ After installation, right-click a human-authored server message, open **Apps**, 
 cp .env.example .env
 ```
 
-Set `DISCORD_TOKEN`, `OLLAMA_HOST` (for example, `https://ollama.example.lan`), and `OLLAMA_API_KEY`. Set `OLLAMA_MODEL` to a model available on the Ollama server. The host must use HTTPS; the API key is sent as a bearer token and is never logged.
+Set `DISCORD_TOKEN`, `OLLAMA_HOST` (for example, `https://ollama.example.lan`), and `OLLAMA_API_KEY`. Set `OLLAMA_MODEL` to a model available on the Ollama server. For witty replies, use `OLLAMA_SYSTEM_PROMPT=You are a concise, funny, and witty Discord assistant. Keep replies helpful and appropriate.` The host must use HTTPS; the API key is sent as a bearer token and is never logged.
 
 ## Local Commands
 
