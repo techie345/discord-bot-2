@@ -1,6 +1,6 @@
 # Discord Ollama Bot
 
-A TypeScript Discord bot that sends each human-authored server message to an Ollama model and replies with the generated response. It ignores DMs, bot messages, webhook messages, and blank messages. Each request contains only the triggering message, so no conversation history is stored.
+A TypeScript Discord bot with a user-installed message context command that sends a selected server message to an Ollama model and posts the generated response. Each request contains only the selected message, so no conversation history is stored.
 
 ## Requirements
 
@@ -12,10 +12,10 @@ A TypeScript Discord bot that sends each human-authored server message to an Oll
 
 1. Create an application in the [Discord Developer Portal](https://discord.com/developers/applications).
 2. Create its bot user and copy the token into `.env`.
-3. On the Bot page, enable **Message Content Intent**.
-4. Invite the bot with the `bot` scope and these channel permissions: View Channel, Read Message History, and Send Messages.
+3. Enable the **User Install** installation context for the application.
+4. Add the `applications.commands` scope to the installation link and install the app for your user.
 
-Every eligible server message invokes Ollama, so a busy server can create significant model load. Use `MAX_CONCURRENT_REQUESTS` to protect the Ollama host.
+After installation, right-click a human-authored server message, open **Apps**, and choose **Ask Ollama**. The command is registered globally and may take time to appear after the bot first connects. Use `MAX_CONCURRENT_REQUESTS` and `MAX_QUEUED_REQUESTS` to protect the Ollama host.
 
 ## Configuration
 
@@ -23,7 +23,7 @@ Every eligible server message invokes Ollama, so a busy server can create signif
 cp .env.example .env
 ```
 
-Set `DISCORD_TOKEN`, `OLLAMA_HOST` (for example, `https://ollama.example.lan`), and `OLLAMA_API_KEY`. Set `OLLAMA_MODEL` to a model available on the Ollama server. The host must use HTTPS; the API key is sent as a bearer token and is never logged.
+Set `DISCORD_TOKEN`, `OLLAMA_HOST` (for example, `https://ollama.example.lan`), and `OLLAMA_API_KEY`. Set `OLLAMA_MODEL` to a model available on the Ollama server. For witty replies, use `OLLAMA_SYSTEM_PROMPT=You are a concise, funny, and witty Discord assistant. Keep replies helpful and appropriate.` The host must use HTTPS; the API key is sent as a bearer token and is never logged.
 
 ## Local Commands
 

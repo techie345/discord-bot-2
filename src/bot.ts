@@ -7,7 +7,7 @@ interface BotMessage {
   author: { bot: boolean };
   webhookId: string | null;
   content: string;
-  channel: { sendTyping?: () => Promise<unknown> };
+  channel: { sendTyping?: () => Promise<unknown> } | null;
   reply: (content: string) => Promise<unknown>;
 }
 
@@ -18,7 +18,8 @@ interface MessageLogger {
 
 interface HandlerDependencies {
   responder: (content: string) => Promise<string>;
-  config: Pick<AppConfig, 'maxConcurrentRequests' | 'fallbackReply'>;
+  config: Pick<AppConfig, 'maxConcurrentRequests' | 'fallbackReply'> &
+    Partial<Pick<AppConfig, 'maxQueuedRequests'>>;
   logger: MessageLogger;
 }
 
@@ -51,7 +52,7 @@ export function createMessageHandler({ responder, config, logger }: HandlerDepen
     const startedAt = Date.now();
     logger.info?.('Processing Discord message', { messageId: message.id, guildId: message.guildId });
     try {
-      await message.channel.sendTyping?.();
+      await message.channel?.sendTyping?.();
     } catch (error) {
       logError(message, error);
     }
@@ -97,6 +98,10 @@ export function createMessageHandler({ responder, config, logger }: HandlerDepen
 
   const handler = ((message: BotMessage): Promise<void> => {
     if (!isEligibleGuildMessage(message) || !accepting) return Promise.resolve();
+    const maxQueuedRequests = config.maxQueuedRequests ?? config.maxConcurrentRequests * 10;
+    if (queue.length >= maxQueuedRequests) {
+      return message.reply(config.fallbackReply).then(() => undefined).catch((error) => logError(message, error));
+    }
     return new Promise((resolve) => {
       queue.push({ message, resolve });
       pump();

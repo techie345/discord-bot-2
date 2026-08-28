@@ -27,6 +27,7 @@ describe('loadConfig', () => {
     expect(config.ollamaSystemPrompt).toContain('funny');
     expect(config.ollamaTimeoutMs).toBe(60_000);
     expect(config.maxConcurrentRequests).toBe(2);
+    expect(config.maxQueuedRequests).toBe(20);
     expect(config.fallbackReply).toBe('I could not generate a reply right now.');
   });
 

@@ -70,4 +70,31 @@ describe('createMessageHandler', () => {
     expect(target.reply).toHaveBeenCalledWith('Try again later.');
     expect(logger.error).toHaveBeenCalledOnce();
   });
+
+  it('rejects requests when the queue is full', async () => {
+    let release!: () => void;
+    let calls = 0;
+    const responder = vi.fn(async () => {
+      calls += 1;
+      if (calls === 1) await new Promise<void>((resolve) => { release = resolve; });
+      return 'reply';
+    });
+    const first = message('first');
+    const second = message('second');
+    const third = message('third');
+    const handler = createMessageHandler({
+      responder,
+      config: { ...config, maxConcurrentRequests: 1, maxQueuedRequests: 1 },
+      logger: console,
+    });
+
+    const firstRequest = handler(first as never);
+    const secondRequest = handler(second as never);
+    await handler(third as never);
+    release();
+    await Promise.all([firstRequest, secondRequest]);
+
+    expect(third.reply).toHaveBeenCalledWith('Try again later.');
+    expect(responder).toHaveBeenCalledTimes(2);
+  });
 });
