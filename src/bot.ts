@@ -7,7 +7,7 @@ interface BotMessage {
   author: { bot: boolean };
   webhookId: string | null;
   content: string;
-  channel: { sendTyping?: () => Promise<unknown> };
+  channel: { sendTyping?: () => Promise<unknown> } | null;
   reply: (content: string) => Promise<unknown>;
 }
 
@@ -51,7 +51,7 @@ export function createMessageHandler({ responder, config, logger }: HandlerDepen
     const startedAt = Date.now();
     logger.info?.('Processing Discord message', { messageId: message.id, guildId: message.guildId });
     try {
-      await message.channel.sendTyping?.();
+      await message.channel?.sendTyping?.();
     } catch (error) {
       logError(message, error);
     }

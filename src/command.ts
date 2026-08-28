@@ -3,6 +3,7 @@ import {
   ApplicationIntegrationType,
   ContextMenuCommandBuilder,
   InteractionContextType,
+  Routes,
 } from 'discord.js';
 import type { AppConfig } from './config.js';
 import { createMessageHandler } from './bot.js';
@@ -39,6 +40,11 @@ interface CommandDependencies {
   logger: Parameters<typeof createMessageHandler>[0]['logger'];
 }
 
+interface CommandRegistrar {
+  setToken: (token: string) => CommandRegistrar;
+  put: (route: `/${string}`, body: { body: ReturnType<typeof createAskOllamaCommand>[] }) => Promise<unknown>;
+}
+
 export function createAskOllamaCommand(): ReturnType<ContextMenuCommandBuilder['toJSON']> {
   return new ContextMenuCommandBuilder()
     .setName('Ask Ollama')
@@ -46,6 +52,16 @@ export function createAskOllamaCommand(): ReturnType<ContextMenuCommandBuilder['
     .setIntegrationTypes(ApplicationIntegrationType.UserInstall)
     .setContexts(InteractionContextType.Guild)
     .toJSON();
+}
+
+export function registerMessageCommand(
+  rest: CommandRegistrar,
+  applicationId: string,
+  token: string,
+): Promise<unknown> {
+  return rest.setToken(token).put(Routes.applicationCommands(applicationId), {
+    body: [createAskOllamaCommand()],
+  });
 }
 
 export function createMessageCommandHandler({ responder, config, logger }: CommandDependencies): MessageCommandHandler {

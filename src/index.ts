@@ -1,7 +1,7 @@
 import { config as loadDotenv } from 'dotenv';
 import { Client, Events, GatewayIntentBits, REST, Routes } from 'discord.js';
 import { Ollama } from 'ollama';
-import { createAskOllamaCommand, createMessageCommandHandler } from './command.js';
+import { createMessageCommandHandler, registerMessageCommand } from './command.js';
 import { loadConfig } from './config.js';
 import { createOllamaResponder } from './ollama-responder.js';
 import { Logger } from './logger.js';
@@ -25,9 +25,7 @@ async function main(): Promise<void> {
 
   client.once(Events.ClientReady, (readyClient) => {
     console.log(`Logged in as ${readyClient.user.tag}`);
-    void new REST({ version: '10' })
-      .setToken(config.discordToken)
-      .put(Routes.applicationCommands(readyClient.user.id), { body: [createAskOllamaCommand()] })
+    void registerMessageCommand(new REST({ version: '10' }), readyClient.user.id, config.discordToken)
       .then(() => logger.info('Registered user-installed message command'))
       .catch((error: unknown) => logger.error('Unable to register message command', error));
   });

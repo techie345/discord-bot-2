@@ -1,9 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createAskOllamaCommand, createMessageCommandHandler } from '../src/command.js';
+import { createAskOllamaCommand, createMessageCommandHandler, registerMessageCommand } from '../src/command.js';
 
 const config = { maxConcurrentRequests: 2, fallbackReply: 'Try again later.' };
 
-function interaction(content = 'hello') {
+function interaction(content = 'hello', channel: { sendTyping: () => Promise<unknown> } | null = {
+  sendTyping: vi.fn().mockResolvedValue(undefined),
+}) {
   return {
     isMessageContextMenuCommand: () => true,
     commandName: 'Ask Ollama',
@@ -14,7 +16,7 @@ function interaction(content = 'hello') {
       guildId: 'guild-id',
       author: { bot: false },
       webhookId: null,
-      channel: { sendTyping: vi.fn().mockResolvedValue(undefined) },
+      channel,
     },
     deferReply: vi.fn().mockResolvedValue(undefined),
     editReply: vi.fn().mockResolvedValue(undefined),
@@ -65,5 +67,31 @@ describe('message command', () => {
     expect(responder).not.toHaveBeenCalled();
     expect(target.deferReply).toHaveBeenCalledOnce();
     expect(target.editReply).toHaveBeenCalledWith('I can only process non-empty human messages.');
+  });
+
+  it('processes a selected message when its channel is not cached', async () => {
+    const target = interaction('hello', null);
+    const responder = vi.fn().mockResolvedValue('answer');
+    const logger = { error: vi.fn(), info: vi.fn() };
+    const handler = createMessageCommandHandler({ responder, config, logger });
+
+    await handler(target as never);
+
+    expect(responder).toHaveBeenCalledWith('hello');
+    expect(logger.error).not.toHaveBeenCalled();
+  });
+
+  it('registers the command for the application globally', async () => {
+    const rest = {
+      setToken: vi.fn().mockReturnThis(),
+      put: vi.fn().mockResolvedValue([]),
+    };
+
+    await registerMessageCommand(rest, 'application-id', 'discord-token');
+
+    expect(rest.setToken).toHaveBeenCalledWith('discord-token');
+    expect(rest.put).toHaveBeenCalledWith('/applications/application-id/commands', {
+      body: [createAskOllamaCommand()],
+    });
   });
 });
