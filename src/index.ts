@@ -1,7 +1,7 @@
 import { config as loadDotenv } from 'dotenv';
-import { Client, Events, GatewayIntentBits } from 'discord.js';
+import { Client, Events, GatewayIntentBits, REST, Routes } from 'discord.js';
 import { Ollama } from 'ollama';
-import { createMessageHandler } from './bot.js';
+import { createAskOllamaCommand, createMessageCommandHandler } from './command.js';
 import { loadConfig } from './config.js';
 import { createOllamaResponder } from './ollama-responder.js';
 import { Logger } from './logger.js';
@@ -18,25 +18,30 @@ async function main(): Promise<void> {
       : {}),
   });
   const responder = createOllamaResponder(ollama, config, logger);
-  const handler = createMessageHandler({ responder, config, logger });
+  const commandHandler = createMessageCommandHandler({ responder, config, logger });
   const client = new Client({
-    intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent],
+    intents: [GatewayIntentBits.Guilds],
   });
 
   client.once(Events.ClientReady, (readyClient) => {
     console.log(`Logged in as ${readyClient.user.tag}`);
+    void new REST({ version: '10' })
+      .setToken(config.discordToken)
+      .put(Routes.applicationCommands(readyClient.user.id), { body: [createAskOllamaCommand()] })
+      .then(() => logger.info('Registered user-installed message command'))
+      .catch((error: unknown) => logger.error('Unable to register message command', error));
   });
-  client.on(Events.MessageCreate, (message) => {
-    void handler(message);
+  client.on(Events.InteractionCreate, (interaction) => {
+    void commandHandler(interaction as never);
   });
 
   let shuttingDown = false;
   const shutdown = async (): Promise<void> => {
     if (shuttingDown) return;
     shuttingDown = true;
-    handler.stop();
+    commandHandler.stop();
     await Promise.race([
-      handler.waitForIdle(),
+      commandHandler.waitForIdle(),
       new Promise<void>((resolve) => setTimeout(resolve, 10_000)),
     ]);
     client.destroy();
