@@ -18,7 +18,8 @@ interface MessageLogger {
 
 interface HandlerDependencies {
   responder: (content: string) => Promise<string>;
-  config: Pick<AppConfig, 'maxConcurrentRequests' | 'fallbackReply'>;
+  config: Pick<AppConfig, 'maxConcurrentRequests' | 'fallbackReply'> &
+    Partial<Pick<AppConfig, 'maxQueuedRequests'>>;
   logger: MessageLogger;
 }
 
@@ -97,6 +98,10 @@ export function createMessageHandler({ responder, config, logger }: HandlerDepen
 
   const handler = ((message: BotMessage): Promise<void> => {
     if (!isEligibleGuildMessage(message) || !accepting) return Promise.resolve();
+    const maxQueuedRequests = config.maxQueuedRequests ?? config.maxConcurrentRequests * 10;
+    if (queue.length >= maxQueuedRequests) {
+      return message.reply(config.fallbackReply).then(() => undefined).catch((error) => logError(message, error));
+    }
     return new Promise((resolve) => {
       queue.push({ message, resolve });
       pump();

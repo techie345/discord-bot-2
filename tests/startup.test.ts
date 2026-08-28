@@ -22,6 +22,7 @@ vi.mock('../src/config.js', () => ({
     ollamaSystemPrompt: 'Be concise.',
     ollamaTimeoutMs: 1_000,
     maxConcurrentRequests: 1,
+    maxQueuedRequests: 20,
     fallbackReply: 'Fallback',
   }),
 }));

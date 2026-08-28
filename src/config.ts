@@ -6,6 +6,7 @@ export interface AppConfig {
   ollamaSystemPrompt: string;
   ollamaTimeoutMs: number;
   maxConcurrentRequests: number;
+  maxQueuedRequests: number;
   fallbackReply: string;
 }
 
@@ -41,6 +42,7 @@ export function loadConfig(env: Record<string, string | undefined>): AppConfig {
     ollamaSystemPrompt: env.OLLAMA_SYSTEM_PROMPT?.trim() || 'You are a concise, funny, and witty Discord assistant. Keep replies helpful and appropriate.',
     ollamaTimeoutMs: positiveInteger(env, 'OLLAMA_TIMEOUT_MS', 60_000),
     maxConcurrentRequests: positiveInteger(env, 'MAX_CONCURRENT_REQUESTS', 2),
+    maxQueuedRequests: positiveInteger(env, 'MAX_QUEUED_REQUESTS', 20),
     fallbackReply: env.FALLBACK_REPLY?.trim() || 'I could not generate a reply right now.',
   };
 }

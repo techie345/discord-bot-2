@@ -15,7 +15,7 @@ A TypeScript Discord bot with a user-installed message context command that send
 3. Enable the **User Install** installation context for the application.
 4. Add the `applications.commands` scope to the installation link and install the app for your user.
 
-After installation, right-click a human-authored server message, open **Apps**, and choose **Ask Ollama**. The command is registered globally and may take time to appear after the bot first connects. Use `MAX_CONCURRENT_REQUESTS` to protect the Ollama host.
+After installation, right-click a human-authored server message, open **Apps**, and choose **Ask Ollama**. The command is registered globally and may take time to appear after the bot first connects. Use `MAX_CONCURRENT_REQUESTS` and `MAX_QUEUED_REQUESTS` to protect the Ollama host.
 
 ## Configuration
 

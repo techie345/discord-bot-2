@@ -36,7 +36,8 @@ export interface MessageCommandHandler {
 
 interface CommandDependencies {
   responder: (content: string) => Promise<string>;
-  config: Pick<AppConfig, 'maxConcurrentRequests' | 'fallbackReply'>;
+  config: Pick<AppConfig, 'maxConcurrentRequests' | 'fallbackReply'> &
+    Partial<Pick<AppConfig, 'maxQueuedRequests'>>;
   logger: Parameters<typeof createMessageHandler>[0]['logger'];
 }
 
