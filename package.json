@@ -9,7 +9,7 @@
   "scripts": {
     "build": "tsc --noEmit false",
     "start": "node dist/index.js",
-    "dev": "tsx src/index.ts",
+    "dev": "nodemon --watch .env --watch src --ext ts,js,json --exec \"tsx src/index.ts\"",
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit"
@@ -22,6 +22,7 @@
   },
   "devDependencies": {
     "@types/node": "latest",
+    "nodemon": "^3.1.14",
     "tsx": "latest",
     "typescript": "latest",
     "vitest": "latest"
